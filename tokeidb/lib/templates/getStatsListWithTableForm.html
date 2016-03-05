@@ -1,0 +1,15 @@
+{% extends "layout.html" %}
+{% block title %}統計表の取得{% endblock %}
+{% block pageheader %}収録統計表一覧{% endblock %}
+{% block content %}
+<p class="well">
+本サービスでは、統計データベース API 機能を利用した統計一覧(各統計に含まれる表の一覧)の取得、各表のメタデータ情報の取得、統計データ絞り込み検索機能を提供します。
+<br />
+下の表は、政府統計ごとに、提供されている統計表の数を年度ごとに示しています。
+調べたい年度がボタンになっていますので、クリックしてください。
+ボタンに表示される「政府統計コード」をパラメータとして API の一つ、統計表一覧の取得(getStatsList)を実行します。
+<br />
+表が多い年度についてはページの表示に時間がかかります。
+</p>
+{% include 'tokeilisttable.html'  %}
+{% endblock %}

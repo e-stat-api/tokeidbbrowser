@@ -1,0 +1,58 @@
+{% extends "layout.html" %}
+{% block title %}統計データの表示{% endblock %}
+{% block pageheader %}統計データ取得 API(getStatsData)実行結果{% endblock %}
+{% block content %}
+{% if not result %}
+<p class="well">
+データが取得できませんでした。
+</p>
+{% else %}
+{%   if result['STATUS']  < 0 or 100 <= result['STATUS'] %}
+<p class="well">
+データベースへの問い合わせが失敗しました(理由 {{ res.result['ERROR_MSG']['TEXT'] }})
+</p>
+{%   else %}
+<p class="well">
+指定されたメタデータ情報にもとづき統計データを取得しました。
+<br />
+合計で {{ result['NUMBER'] }} 件のデータを取得しました。<br />
+統計データ取得 API(getStatsData)の結果として取得した、統計表情報および統計データを示します。<br />
+{% if limit < result['NUMBER'] %}
+表示可能件数を越えていますので、取得したデータ {{ result['NUMBER'] }} 件のうち {{ limit }} 件を表示します。
+{% endif %}
+</p>
+<h2>統計表情報</h2>
+<table class="table table-bordered table-striped table-condensed">
+  <thead>
+    <tr><th>項目</th><th>&nbsp;</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>統計データID</td><td>{{ result['TABLE_INF']['ID']['TEXT'] }}</td></tr>
+    <tr><td>政府統計名</td><td>{{ result['TABLE_INF']['STAT_NAME']['TEXT'] }}</td></tr>
+    <tr><td>作成機関名</td><td>{{ result['TABLE_INF']['GOV_ORG']['TEXT'] }}</td></tr>
+    <tr><td>提供統計名</td><td>{{ result['TABLE_INF']['STATISTICS_NAME']['TEXT'] }}</td></tr>
+    <tr><td>表題</td><td>{{ result['TABLE_INF']['TITLE']['TEXT'] }}</td></tr>
+    <tr><td>調査年月</td><td>{{ result['TABLE_INF']['SURVEY_DATE']['TEXT'] }}</td></tr>
+  </tbody>
+</table>
+
+<h2>統計データ情報</h2>
+<table class="table table-bordered table-striped table-condensed">
+  <thead>
+    <tr><th>表章事項</th><th>時間軸事項</th><th>地域事項</th><th>分類事項</th><th>データ</th></tr>
+  </thead>
+  <tbody>
+  {% for value in result['DATA_INF'] %}
+  <tr>
+    <td>{{ value['tab_name'] }} ({{ value['tab'] }})</td>
+    <td>{{ value['time_name'] }} ({{ value['time'] }})</td>
+    <td>{{ value['area_name'] }} ({{ value['area'] }})</td>
+    <td>{{ value['category'] }}</td>
+    <td>{{ value['TEXT'] }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{%   endif %}
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,20 @@
+# -*- mode:python;encoding:utf-8 -*- 
+# -*- coding:utf-8 -*-
+#
+# tokeidb.wsgi
+#
+
+import os
+import sys
+
+path = '%%DSTDIR%%/lib'
+if path not in sys.path:
+    sys.path.insert(0, path)
+
+os.environ['TOKEIDB_CONFIG_FILE']     = '%%DSTDIR%%/etc/tokeidb.conf'
+
+from app import app as application
+
+#
+# end of code
+#

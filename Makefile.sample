@@ -1,0 +1,85 @@
+#
+# For CentOS 7
+#
+
+VERSION=	20160304
+
+DSTDIR= 	/var/www/tokeidb
+APACHEDIR= 	/etc/httpd/conf.d
+SOCKDIR=	/var/run/wsgi
+USER=		apache
+GROUP=		apache
+
+URLPREFIX=	/api/sample2/tokeidb
+
+DBHOST=		api.e-stat.go.jp
+APPID=		[[ REPLACE YOUR APPLICATION ID ]]
+
+PROXYHOST=	
+PROXYPORT=	
+
+LOGFILE=	/tmp/tokeidb.log
+LOGLEVEL=	ERROR
+
+archive:
+	(cd .. && tar --exclude=Makefile --exclude=*.pyc -zcvf tokeidbbrowser_$(VERSION).tgz tokeidbbrowser_$(VERSION))
+
+install: install-pkg install-flask \
+	create-dstdir \
+	install-app \
+	install-apache-module \
+	fix-files-attribute \
+	restart-service
+
+install-pkg:
+	yum -y install httpd httpd-tools mod_wsgi python-setuptools rsync
+
+install-flask:
+	easy_install pip
+	pip install Flask
+
+create-dstdir:
+	@if [ ! -d $(DSTDIR) ]; then mkdir $(DSTDIR); fi
+	@if [ ! -d $(DSTDIR)/bin ]; then mkdir $(DSTDIR)/bin; fi
+	@if [ ! -d $(DSTDIR)/etc ]; then mkdir $(DSTDIR)/etc; fi
+	@if [ ! -d $(DSTDIR)/lib ]; then mkdir $(DSTDIR)/lib; fi
+	@if [ ! -d $(DSTDIR)/log ]; then mkdir $(DSTDIR)/log; fi
+
+install-app:
+	@echo "Create WSGI application file"
+	@sed -e "s#%%DSTDIR%%#$(DSTDIR)#g" \
+	     tokeidb/bin/tokeidb.wsgi.sample >$(DSTDIR)/bin/tokeidb.wsgi
+	@echo "Copy TokeiDB Browser source"
+	@(cd tokeidb && rsync -az --delete lib  $(DSTDIR))
+	@echo "Create TokeiDB Browser configurtion"
+	@sed -e "s#%%DBHOST%%#$(DBHOST)#g" \
+	     -e "s#%%APPID%%#$(APPID)#g" \
+	     -e "s#%%SECRETKEY%%#$(SECRETKEY)#g" \
+	     -e "s#%%PROXYHOST%%#$(PROXYHOST)#g" \
+	     -e "s#%%PROXYPORT%%#$(PROXYPORT)#g" \
+	     -e "s#%%LOGFILE%%#$(LOGFILE)#g" \
+	     -e "s#%%LOGLEVEL%%#$(LOGLEVEL)#g" \
+	     tokeidb/etc/tokeidb.conf.sample >$(DSTDIR)/etc/tokeidb.conf
+
+install-apache-module:
+	@echo "Create Apache WSGI module configuration"
+	@sed -e "s#%%DSTDIR%%#$(DSTDIR)#g" \
+	     -e "s#%%SOCKDIR%%#$(SOCKDIR)#g" \
+	     -e "s#%%USER%%#$(USER)#g" \
+	     -e "s#%%GROUP%%#$(GROUP)#g" \
+	     -e "s#%%URLPREFIX%%#$(URLPREFIX)#g" \
+	     httpd-config/tokeidb_wsgi.conf.sample > $(APACHEDIR)/tokeidb_wsgi.conf
+
+fix-files-attribute:
+	@echo "Fix files attribute"
+	@chown -R root.root $(DSTDIR)
+	@find $(DSTDIR) -type f -exec chmod 444 {} \;
+	@find $(DSTDIR) -type d -exec chmod 755 {} \;
+
+restart-service:
+	systemctl restart httpd.service
+
+update-frontpage:
+	@echo "Update Frontpage"
+	@(cd util && python CreateTokeiListTable.py $(DBHOST) $(APPID))
+	@(cd util && cp tokeilisttable.html ../tokeidb/lib/templates)

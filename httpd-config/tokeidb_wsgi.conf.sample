@@ -1,0 +1,32 @@
+#
+#
+#
+#
+#
+
+WSGISocketPrefix        %%SOCKDIR%%
+WSGIDaemonProcess       tokeidb user=%%USER%% group=%%GROUP%% threads=5 maximum-requests=1000
+WSGIScriptAlias         %%URLPREFIX%% %%DSTDIR%%/bin/tokeidb.wsgi
+WSGIProcessGroup        tokeidb
+
+<Directory %%DSTDIR%%/tokeidb>
+    WSGIProcessGroup tokeidb
+    WSGIApplicationGroup %{GLOBAL}
+    Order deny,allow
+    Allow from all
+#    AuthType Digest
+#    AuthName "TokeiAPIHackathon"
+#    AuthDigestProvider file
+#    AuthUserFile %%DSTDIR%%/etc/passwd
+#    Require valid-user
+</Directory>
+
+<Directory %%DSTDIR%%/tokeidb/lib>
+    Order deny,allow
+    Deny from all
+</Directory>
+
+<Directory %%DSTDIR%%/tokeidb/etc>
+    Order deny,allow
+    Deny from all
+</Directory>

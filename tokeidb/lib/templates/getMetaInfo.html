@@ -1,0 +1,90 @@
+{% extends "layout.html" %}
+{% block title %}統計データ検索{% endblock %}
+{% block pageheader %}メタデータ情報取得 API(getMetaInfo)実行結果{% endblock %}
+{% block content %}
+{% if not result %}
+<p class="well">
+データが取得できませんでした。
+</p>
+{% else %}
+{%   if result['STATUS']  < 0 or 100 <= result['STATUS'] %}
+<p class="well">
+データベースへの問い合わせが失敗しました(理由 {{ res.result['ERROR_MSG']['TEXT'] }})
+</p>
+{%   else %}
+<p class="well">
+指定された政府統計表についてメタデータ情報を取得しました。
+<br />
+メタデータ情報をパラメータとして統計データを検索することができます(階層レベル指定およびコード範囲指定には対応していません）。
+</p>
+
+<h2>統計データ検索</h2>
+<form style="margin-bottom:0" method="GET" action="{{ url_for('showStatsData') }}">
+<input type="hidden" id="statsDataId" name="statsDataId" value="{{ result['TABLE_INF']['ID']['TEXT'] }}" />
+<table class="table table-bordered table-striped table-condensed">
+  <thead>
+    <tr><th style="width:10em;">パラメータ</th><th>絞り込み条件</th></tr>
+  </thead>
+  <tbody>
+    {% for clsobj in result['CLASS_INF'] %}
+    <tr>
+      <td>{{ clsobj['name'] }}</td>
+      <td>単一コード：
+        <select id="cd{{ clsobj['id'] | capitalize}}"name="cd{{ clsobj['id'] | capitalize}}">
+        <option value="" selected></option>
+        {% for cls in clsobj['CLASS'] %}
+          <option value="{{ cls['code'] }}">{{ cls['name'] }}</option>
+        {% endfor %}
+        </select>
+      </td>
+    {% endfor %}
+    </tr>
+    <tr><td colspan="3"><input class="btn btn-primary btn-large" type="submit" value="getStatsData 実行" /> </td></tr>
+  </tbody>
+</table>
+</form>
+
+<p class="well">
+メタデータ情報取得 API (getMetaInfo)の結果として取得した、統計表情報およびメタデータ情報を
+示します。
+</p>
+
+<h2>統計表情報</h2>
+<table class="table table-bordered table-striped table-condensed">
+  <thead>
+    <tr><th>項目</th><th>&nbsp;</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>統計データID</td><td>{{ result['TABLE_INF']['ID']['TEXT'] }}</td></tr>
+    <tr><td>政府統計名</td><td>{{ result['TABLE_INF']['STAT_NAME']['TEXT'] }}</td></tr>
+    <tr><td>作成機関名</td><td>{{ result['TABLE_INF']['GOV_ORG']['TEXT'] }}</td></tr>
+    <tr><td>提供統計名</td><td>{{ result['TABLE_INF']['STATISTICS_NAME']['TEXT'] }}</td></tr>
+    <tr><td>表題</td><td>{{ result['TABLE_INF']['TITLE']['TEXT'] }}</td></tr>
+    <tr><td>調査年月</td><td>{{ result['TABLE_INF']['SURVEY_DATE']['TEXT'] }}</td></tr>
+  </tbody>
+</table>
+
+<h2>メタデータ情報</h2>
+<table class="table table-bordered table-striped table-condensed">
+  <thead>
+    <tr><th>コード</th><th style="width:10em;">名称</th><th>要素(コード, 名称, レベル, 単位)</th></tr>
+  </thead>
+  <tbody>
+    {% for clsobj in result['CLASS_INF'] %}
+    <tr>
+      <td>{{ clsobj['id'] }}</td>
+      <td>{{ clsobj['name'] }}</td>
+      <td>
+        {% for cls in clsobj['CLASS'] %}
+          ({{ cls['code'] }}, {{ cls['name'] }}, {{ cls['level'] }}), <br />
+        {% endfor %}
+      </td>
+    {% endfor %}
+    </tr>
+  </tbody>
+</table>
+{%   endif %}
+{% endif %}
+
+{% endblock %}
+
